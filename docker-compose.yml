@@ -1,0 +1,27 @@
+version: "3"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"  # Adjust the port as needed
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:15.3-alpine3.18
+    environment:
+      POSTGRES_USER: pguser
+      POSTGRES_PASSWORD: pgpasswd
+      POSTGRES_DB: vrtstorage
+    ports:
+      - "5432:5432"  # Expose PostgreSQL port
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:  # Define a named volume for PostgreSQL data
