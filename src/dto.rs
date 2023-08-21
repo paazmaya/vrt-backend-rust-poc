@@ -78,8 +78,6 @@ pub struct HealthStatus {
     pub status: String,
 }
 
-use serde::{Deserialize, Serialize};
-
 // Request DTO for updating user information
 #[derive(Debug, Deserialize, Serialize)]
 pub struct UpdateUserDto {
@@ -156,5 +154,3 @@ pub struct PaginatedDto<T> {
     pub total: i32,
     pub data: Vec<T>,
 }
-
-// ... Define other DTOs as needed based on your OpenAPI specification

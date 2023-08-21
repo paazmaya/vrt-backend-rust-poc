@@ -10,6 +10,7 @@ edition = "2021"
 [dependencies]
 # https://github.com/tokio-rs/axum
 axum = "0.6"
+tower = { version = "0.4", features = ["full"] }
 
 # https://tokio.rs/
 tokio = { version = "1.32", features = ["full"] }
