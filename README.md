@@ -2,6 +2,8 @@
 
 > Just trying out how trivial it would be to use OpenAPI spec and the help from ChatGPT to rebuild the backend in Rust
 
+[![Code Smells](https://sonarcloud.io/api/project_badges/measure?project=paazmaya_vrt-backend-rust-poc&metric=code_smells)](https://sonarcloud.io/summary/new_code?id=paazmaya_vrt-backend-rust-poc)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=paazmaya_vrt-backend-rust-poc&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=paazmaya_vrt-backend-rust-poc)
 
 ## Running with Docker
 

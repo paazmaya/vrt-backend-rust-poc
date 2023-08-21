@@ -885,6 +885,8 @@ dependencies = [
  "dotenv",
  "insta",
  "r2d2",
+ "serde",
+ "serde_json",
  "tokio",
 ]
 

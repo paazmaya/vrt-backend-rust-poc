@@ -1,5 +1,32 @@
-use axum::prelude::*;
+pub mod dto;
+
+// Import required external crates
+// Import required external crates
+extern crate axum;
+extern crate diesel;
+extern crate dotenv;
+extern crate tokio;
+
+// Import specific items from external crates
+use diesel::pg::PgConnection;
+use diesel::r2d2::{ConnectionManager, Pool};
+use dotenv::dotenv;
+use std::env;
+
+// Import specific items from external crates
+use axum::AddExtensionLayer;
+use axum::body::Json;
+use axum::extract::Extension;
+use axum::extract::Path;
+use axum::handler::{get, post, put, patch, delete};
+use axum::http::{Response, StatusCode};
+use axum::http::header::{self, HeaderValue};
 use axum::http::StatusCode;
+use axum::body::Body;
+use axum::Router;
+use axum::routing::BoxRoute;
+use axum::routing::service::ServiceExt;
+
 use dotenv::dotenv;
 use std::env;
 
@@ -7,11 +34,15 @@ use std::env;
 use diesel::prelude::*;
 use diesel::r2d2::{self, ConnectionManager};
 use diesel::PgConnection;
+use diesel::result::Error;
 
+// Use statements for specific items from local modules
+use handlers::ApiHandler;
 
 // Define your API routes
 fn routes() -> Router<Body> {
-    route("/health", get(ApiHandler::health_check_handler))
+    Router::new()
+        .route("/health", get(ApiHandler::health_check_handler))
         .route("/users/register", post(ApiHandler::register_user_handler))
         .route("/users/login", post(ApiHandler::login_handler))
         .route("/users/newApiKey", get(ApiHandler::generate_new_api_key_handler))
@@ -43,7 +74,6 @@ fn routes() -> Router<Body> {
         .route("/projects", get(ApiHandler::get_all_projects_handler))
         .route("/projects", post(ApiHandler::create_project_handler))
         .route("/projects/{id}", delete(ApiHandler::remove_project_handler))
-        // ... Add more routes based on your OpenAPI specification
 }
 
 
@@ -59,14 +89,12 @@ async fn main() {
         .build(manager)
         .expect("Failed to create connection pool");
 
-    // Start the Axum server with the defined routes
-    let app = routes().layer(axum::AddExtensionLayer::new(pool));
-    let addr = std::net::SocketAddr::from(([0, 0, 0, 0], 3000));
 
-    // Start the server
-    axum::Server::bind(&addr)
-        .serve(app.into_make_service())
-        .await
-        .expect("Server failed");
+    // build our application with a route
+    let app = routes();
+
+    // run our app with hyper, listening globally on port 3000
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
 
 }
