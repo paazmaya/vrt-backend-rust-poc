@@ -1,46 +1,38 @@
 pub mod dto;
+pub mod handlers;
 
-// Import required external crates
 // Import required external crates
 extern crate axum;
 extern crate diesel;
 extern crate dotenv;
 extern crate tokio;
 
-// Import specific items from external crates
-use diesel::pg::PgConnection;
-use diesel::r2d2::{ConnectionManager, Pool};
-use dotenv::dotenv;
-use std::env;
-
-// Import specific items from external crates
-use axum::AddExtensionLayer;
-use axum::body::Json;
 use axum::extract::Extension;
 use axum::extract::Path;
-use axum::handler::{get, post, put, patch, delete};
-use axum::http::{Response, StatusCode};
 use axum::http::header::{self, HeaderValue};
-use axum::http::StatusCode;
 use axum::body::Body;
-use axum::Router;
-use axum::routing::BoxRoute;
-use axum::routing::service::ServiceExt;
+
+use axum::{
+    routing::{get, post, put, patch, delete},
+    http::{Response, StatusCode},
+    response::IntoResponse,
+    Json, Router,
+    ServiceExt,
+};
 
 use dotenv::dotenv;
 use std::env;
 
 // Import Diesel's prelude
 use diesel::prelude::*;
-use diesel::r2d2::{self, ConnectionManager};
-use diesel::PgConnection;
+use diesel::r2d2::{self, Pool, ConnectionManager};
 use diesel::result::Error;
+use diesel::pg::PgConnection;
 
-// Use statements for specific items from local modules
 use handlers::ApiHandler;
 
 // Define your API routes
-fn routes() -> Router<Body> {
+fn routes() {
     Router::new()
         .route("/health", get(ApiHandler::health_check_handler))
         .route("/users/register", post(ApiHandler::register_user_handler))
@@ -91,10 +83,21 @@ async fn main() {
 
 
     // build our application with a route
-    let app = routes();
+    let app = routes().with_state(pool);
 
-    // run our app with hyper, listening globally on port 3000
-    let listener = tokio::net::TcpListener::bind("0.0.0.0:3000").await.unwrap();
-    axum::serve(listener, app).await.unwrap();
+    // Read the environment variable for port
+    let port_str = env::var("REST_PORT").unwrap_or("8080".to_string());
+
+    // Convert the string to u16
+    let port: u16 = port_str.parse().expect("Failed to parse port");
+
+    // Bind to the specified IP address and port
+    let addr = format!("0.0.0.0:{}", port);
+    println!("Listening on {}", addr);
+
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
+        .await
+        .unwrap();
 
 }
