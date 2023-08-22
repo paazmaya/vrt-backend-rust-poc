@@ -6,27 +6,22 @@ use diesel::r2d2::{Pool, ConnectionManager};
 
 use serde_json::json;
 use serde::{Deserialize, Serialize};
-use dto::{
-    CreateUserDto, UserLoginRequestDto, UserLoginResponseDto, UpdateUserDto, UserDto, AssignRoleDto,
-    PaginatedBuildDto, CreateBuildDto, BuildDto, TestRunDto, IgnoreAreaDto, UpdateIgnoreAreasDto,
-    UpdateTestRunDto, CreateTestRequestBase64Dto, TestRunResultDto, CreateTestRequestMultipartDto,
-    ProjectDto, CreateProjectDto, UpdateProjectDto,
-};
+use crate::dto::*;
 
 
 #[derive(Debug, Serialize)]
-struct ErrorResponse {
+pub struct ErrorResponse {
     error: String,
 }
 
 #[derive(Serialize, Deserialize)]
-struct ApiResponse<T> {
+pub struct ApiResponse<T> {
     status: Status,
     data: T,
 }
 
 #[derive(Serialize, Deserialize)]
-enum Status {
+pub enum Status {
     Ok,
     Error,
 }

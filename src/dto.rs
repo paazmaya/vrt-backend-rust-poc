@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-// Define request and response DTO structs
-
 // Request DTO for user registration
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CreateUserDto {

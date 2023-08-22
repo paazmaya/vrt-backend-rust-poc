@@ -1,12 +1,6 @@
 pub mod dto;
 pub mod handlers;
 
-// Import required external crates
-extern crate axum;
-extern crate diesel;
-extern crate dotenv;
-extern crate tokio;
-
 use axum::extract::Extension;
 use axum::extract::Path;
 use axum::http::header::{self, HeaderValue};
@@ -33,7 +27,7 @@ use diesel::pg::PgConnection;
 use handlers::ApiHandler;
 
 // Define your API routes
-fn routes() -> impl tower::Service<Request<Body>, Response = Response<Body>, Error = Infallible> {
+fn routes() -> Router<(), Body> {
     Router::new()
         .route("/health", get(ApiHandler::health_check_handler))
         // .route("/users/register", post(ApiHandler::register_user_handler))
@@ -84,7 +78,7 @@ async fn main() {
 
 
     // build our application with a route
-    let app = routes().with_state(pool);
+    let app = routes(); //.with_state(pool);
 
     // Read the environment variable for port
     let port_str = env::var("REST_PORT").unwrap_or("8080".to_string());
