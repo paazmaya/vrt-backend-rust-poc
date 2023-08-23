@@ -11,7 +11,7 @@ COPY . .
 
 # Install required dependencies (e.g., PostgreSQL client libraries)
 # https://pkgs.alpinelinux.org/packages?name=libpq
-RUN apk add --update libpq musl-dev
+RUN apk add --update libpq-dev musl-dev
 
 # Build your Rust project
 RUN cargo build
