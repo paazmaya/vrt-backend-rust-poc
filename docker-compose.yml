@@ -8,7 +8,8 @@ services:
     volumes:
       - .:/app
     ports:
-      - "4200:4200"  # Adjust the port as needed
+      - "5252:5252" # Set via .env
+      - "8989:8989" # Default in main.rs
     depends_on:
       - postgres
 
@@ -19,7 +20,7 @@ services:
       POSTGRES_PASSWORD: pgpasswd
       POSTGRES_DB: vrtstorage
     ports:
-      - "5432:5432"  # Expose PostgreSQL port
+      - "5431:5432"  # Expose PostgreSQL port
     volumes:
       - postgres_data:/var/lib/postgresql/data
 

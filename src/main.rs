@@ -81,7 +81,7 @@ async fn main() {
     let app = routes(); //.with_state(pool);
 
     // Read the environment variable for port
-    let port_str = env::var("REST_PORT").unwrap_or("8080".to_string());
+    let port_str = env::var("REST_PORT").unwrap_or("8989".to_string());
 
     // Convert the string to u16
     let port: u16 = port_str.parse().expect("Failed to parse port");
