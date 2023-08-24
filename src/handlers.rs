@@ -1,13 +1,16 @@
+
+
+
 use axum::response::IntoResponse;
 use axum::{http::StatusCode, Json, Router};
 
 use diesel::pg::PgConnection;
-use diesel::r2d2::{Pool, ConnectionManager};
+use deadpool_diesel::{Pool, Manager, Runtime};
 
 use serde_json::json;
 use serde::{Deserialize, Serialize};
-use crate::dto::*;
 
+use models::schema::*;
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
@@ -26,20 +29,35 @@ pub enum Status {
     Error,
 }
 
-pub struct ApiHandler {
-    db_pool: Pool<ConnectionManager<PgConnection>>,
-}
 
 impl ApiHandler {
-    pub fn new(db_pool: Pool<ConnectionManager<PgConnection>>) -> Self {
-        ApiHandler { db_pool }
+
+
+    pub async fn create_user(
+        State(pool): State<Pool>,
+        Json(new_user): Json<CreateUserDto>,
+    ) -> Result<Json<User>, (StatusCode, String)> {
+        let conn = pool.get().await.map_err(internal_error)?;
+        let res = conn
+            .interact(|conn:PgConnection| {
+                diesel::insert_into(users::table)
+                    .values(new_user)
+                    .returning(CreateUserDto::as_returning())
+                    .get_result(conn)
+            })
+            .await
+            .map_err(internal_error)?
+            .map_err(internal_error)?;
+        Ok(Json(res))
     }
 
-    pub async fn health_check_handler() -> Json<ApiResponse<String>> {
-        Json(ApiResponse {
+    pub async fn health_check_handler(
+        State(pool): State<Pool>,
+    ) -> Result<Json<String>, (StatusCode, String)> {
+        Ok(Json(ApiResponse {
             status: Status::Ok,
             data: "Health check successful".to_string(),
-        })
+        }))
     }
     /*
     pub async fn register_user_handler() -> Json<ApiResponse<String>> {

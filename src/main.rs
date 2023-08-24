@@ -1,5 +1,6 @@
-pub mod dto;
 pub mod handlers;
+pub mod models;
+pub mod schema;
 
 use axum::extract::Extension;
 use axum::extract::Path;
@@ -14,20 +15,22 @@ use axum::{
     RequestExt,
 };
 
-use dotenv::dotenv;
+use dotenvy::dotenv;
 use std::env;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::convert::Infallible;
 
-use diesel::r2d2::{self, Pool, ConnectionManager};
 use diesel::result::Error;
 use diesel::pg::PgConnection;
+use diesel::prelude::*;
+
+use deadpool_diesel::{Pool, Manager, Runtime};
 
 use handlers::ApiHandler;
 
 // Define your API routes
-fn routes() -> Router<(), Body> {
+fn routes() -> Router<Pool<Manager<PgConnection>>, Body> {
     Router::new()
         .route("/health", get(ApiHandler::health_check_handler))
         // .route("/users/register", post(ApiHandler::register_user_handler))
@@ -69,25 +72,25 @@ async fn main() {
     // Load environment variables from .env file
     dotenv().ok();
 
-    // Initialize the database connection pool using Diesel and R2D2
-    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL not set in .env");
-    let manager = ConnectionManager::<PgConnection>::new(database_url);
-    let pool = r2d2::Pool::builder()
-        .build(manager)
-        .expect("Failed to create connection pool");
-
+    let database_url: String = env::var("DATABASE_URL").expect("DATABASE_URL not set in .env");
+    
+    // set up connection pool
+    let manager: Manager<PgConnection> = Manager::new(database_url, Runtime::Tokio1);
+    let pool: Pool<Manager<PgConnection>> = Pool::builder(manager)
+        .build()
+        .unwrap();
 
     // build our application with a route
-    let app = routes(); //.with_state(pool);
+    let app: Router = routes().with_state(pool);
 
     // Read the environment variable for port
-    let port_str = env::var("REST_PORT").unwrap_or("8989".to_string());
+    let port_str: String = env::var("REST_PORT").unwrap_or("8989".to_string());
 
     // Convert the string to u16
     let port: u16 = port_str.parse().expect("Failed to parse port");
 
     // Bind to the specified IP address and port
-    let addr = SocketAddr::from_str(&format!("0.0.0.0:{}", port))
+    let addr: SocketAddr = SocketAddr::from_str(&format!("0.0.0.0:{}", port))
         .expect("Invalid address format");
     println!("Listening on {}", addr);
 

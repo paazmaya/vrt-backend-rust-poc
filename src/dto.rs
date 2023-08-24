@@ -1,7 +1,9 @@
 use serde::{Deserialize, Serialize};
+use diesel::{Queryable, Selectable, Insertable};
 
 // Request DTO for user registration
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Selectable, Queryable)]
+#[diesel(table_name = users)]
 pub struct CreateUserDto {
     pub email: String,
     pub password: String,
