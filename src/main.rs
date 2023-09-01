@@ -1,33 +1,32 @@
-pub mod handlers;
-pub mod models;
-pub mod schema;
 
-use axum::extract::Extension;
-use axum::extract::Path;
-use axum::http::header::{self, HeaderValue};
-use axum::body::Body;
 
 use axum::{
     routing::{get, post, put, patch, delete},
-    http::{Response, StatusCode, Request},
-    response::IntoResponse,
-    Json, Router,
-    RequestExt,
+    body::Body,
+    Router,
 };
 
 use dotenvy::dotenv;
 use std::env;
 use std::net::SocketAddr;
 use std::str::FromStr;
-use std::convert::Infallible;
 
-use diesel::result::Error;
 use diesel::pg::PgConnection;
-use diesel::prelude::*;
-
 use deadpool_diesel::{Pool, Manager, Runtime};
+use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
-use handlers::ApiHandler;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+mod handlers;
+mod models;
+mod schema;
+
+use crate::handlers::ApiHandler;
+
+// this embeds the migrations into the application binary
+// the migration path is relative to the `CARGO_MANIFEST_DIR`
+pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("migrations/");
+
 
 // Define your API routes
 fn routes() -> Router<Pool<Manager<PgConnection>>, Body> {
@@ -39,7 +38,7 @@ fn routes() -> Router<Pool<Manager<PgConnection>>, Body> {
         // .route("/users/password", put(ApiHandler::change_password_handler))
         // .route("/users", put(ApiHandler::update_user_handler))
         // .route("/users", delete(ApiHandler::delete_user_handler))
-        // .route("/users/all", get(ApiHandler::user_list_handler))
+        .route("/users/all", get(ApiHandler::user_list_handler))
         // .route("/users/assignRole", patch(ApiHandler::assign_role_handler))
         // .route("/builds", get(ApiHandler::get_builds_handler))
         // .route("/builds", post(ApiHandler::create_build_handler))
@@ -69,6 +68,14 @@ fn routes() -> Router<Pool<Manager<PgConnection>>, Body> {
 
 #[tokio::main]
 async fn main() {
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| "vrt_backend=debug".into()),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
     // Load environment variables from .env file
     dotenv().ok();
 
@@ -79,6 +86,15 @@ async fn main() {
     let pool: Pool<Manager<PgConnection>> = Pool::builder(manager)
         .build()
         .unwrap();
+
+    // run the migrations on server startup
+    {
+        let conn = pool.get().await.unwrap();
+        conn.interact(|conn| conn.run_pending_migrations(MIGRATIONS).map(|_| ()))
+            .await
+            .unwrap()
+            .unwrap();
+    }
 
     // build our application with a route
     let app: Router = routes().with_state(pool);
@@ -92,7 +108,7 @@ async fn main() {
     // Bind to the specified IP address and port
     let addr: SocketAddr = SocketAddr::from_str(&format!("0.0.0.0:{}", port))
         .expect("Invalid address format");
-    println!("Listening on {}", addr);
+    tracing::debug!("listening on {}", addr);
 
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

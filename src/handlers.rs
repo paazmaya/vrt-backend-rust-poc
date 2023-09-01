@@ -1,16 +1,20 @@
 
+use axum::http::StatusCode;
+use axum::{extract::State, response::Json};
 
+use rand::Rng;
 
-use axum::response::IntoResponse;
-use axum::{http::StatusCode, Json, Router};
+use diesel::PgConnection;
+use deadpool_diesel::postgres::Pool;
+use diesel::query_dsl::methods::SelectDsl;
 
-use diesel::pg::PgConnection;
-use deadpool_diesel::{Pool, Manager, Runtime};
-
-use serde_json::json;
 use serde::{Deserialize, Serialize};
 
-use models::schema::*;
+// DTOs
+use crate::models::*;
+
+// Table definitions
+use crate::schema::users::dsl::*;
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
@@ -28,11 +32,12 @@ pub enum Status {
     Ok,
     Error,
 }
+pub struct ApiHandler;
 
 
 impl ApiHandler {
 
-
+/* 
     pub async fn create_user(
         State(pool): State<Pool>,
         Json(new_user): Json<CreateUserDto>,
@@ -50,23 +55,48 @@ impl ApiHandler {
             .map_err(internal_error)?;
         Ok(Json(res))
     }
-
+*/
+    /**
+     * Return type Result<Json<String>, (StatusCode, String)> 
+     * means that the function can return either a JSON string 
+     * as a successful result or a tuple containing an HTTP status 
+     * code and an error message as an error. 
+    */
     pub async fn health_check_handler(
+        State(_pool): State<Pool>,
+    ) -> Result<Json<HealthResponseDto>, (StatusCode, String)> {
+        // Generate a random number between 0 and 1
+        let random_number: i32 = rand::thread_rng().gen_range(0..2);
+
+        if random_number == 0 {
+            // Simulate an error response
+            Err((StatusCode::INTERNAL_SERVER_ERROR, "Internal Server Error".to_string()))
+        } else {
+            // Simulate a successful response
+            Ok(Json(HealthResponseDto { message: "Health check successful".to_string()}))
+        }
+    }
+
+    pub async fn register_user_handler(
         State(pool): State<Pool>,
-    ) -> Result<Json<String>, (StatusCode, String)> {
-        Ok(Json(ApiResponse {
-            status: Status::Ok,
-            data: "Health check successful".to_string(),
-        }))
+        Json(new_user): Json<CreateUserDto>,
+    ) -> Result<Json<UserRegisterDto>, (StatusCode, String)> {
+        
+        let conn = pool.get().await.map_err(internal_error)?;
+        let res: UserRegisterDto = conn
+            .interact(|conn| {
+                diesel::insert_into(users)
+                    .values(new_user)
+                    .returning(UserRegisterDto::as_returning())
+                    .get_result(conn)
+            })
+            .await
+            .map_err(internal_error)?
+            .map_err(internal_error)?;
+        Ok(Json(res))
     }
+
     /*
-    pub async fn register_user_handler() -> Json<ApiResponse<String>> {
-        Json(ApiResponse {
-            status: Status::Ok,
-            data: "User registered successfully".to_string(),
-        })
-    }
-    
     pub async fn login_handler() -> Json<ApiResponse<String>> {
         Json(ApiResponse {
             status: Status::Ok,
@@ -115,16 +145,21 @@ impl ApiHandler {
             data: true,
         })
     }
+    */
 
-    pub async fn user_list_handler(&self) -> Result<Json<Vec<UserDto>>, StatusCode> {
-        // Implement fetching a list of users logic
-        // Return a Vec<UserDto>
-        Json(ApiResponse {
-            status: Status::Ok,
-            data: "Login successful".to_string(),
-        })
+    pub async fn user_list_handler(
+        State(pool): State<Pool>,
+    ) -> Result<Json<Vec<UserDto>>, (StatusCode, String)> {
+
+        let conn = pool.get().await.map_err(internal_error)?;
+        let res: Vec<UserDto> = conn
+            .interact(|conn: &mut PgConnection| users.select(UserDto::as_select()).load(conn))
+            .await
+            .map_err(internal_error)?
+            .map_err(internal_error)?;
+        Ok(Json(res))
     }
-
+    /* 
     pub async fn assign_role_handler(&self) -> Result<Json<UserDto>, StatusCode> {
         // Implement assigning a role to a user logic
         // Return a UserDto with updated role
@@ -215,4 +250,15 @@ impl ApiHandler {
         })
     }*/
 
+}
+
+
+
+/// Utility function for mapping any error into a `500 Internal Server Error`
+/// response.
+fn internal_error<E>(err: E) -> (StatusCode, String)
+where
+    E: std::error::Error,
+{
+    (StatusCode::INTERNAL_SERVER_ERROR, err.to_string())
 }
