@@ -25,4 +25,4 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
 volumes:
-  postgres_data:  # Define a named volume for PostgreSQL data
+  postgres_data: # Define a named volume for PostgreSQL data

@@ -79,6 +79,7 @@ impl ApiHandler {
         }
     }
 
+    /*
     pub async fn user_list_handler(
         State(pool): State<Pool<Manager<PgConnection>>>,
     ) -> Result<Json<Vec<UserDto>>, (StatusCode, String)> {
@@ -113,7 +114,7 @@ impl ApiHandler {
             .map_err(internal_error)?;
         Ok(Json(res))
     }
-
+ */
     /*
     pub async fn login_handler() -> Json<ApiResponse<String>> {
         Json(ApiResponse {

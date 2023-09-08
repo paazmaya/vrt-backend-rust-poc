@@ -38,7 +38,7 @@ fn routes() -> Router<Pool<Manager<PgConnection>>, Body> {
         // .route("/users/password", put(ApiHandler::change_password_handler))
         // .route("/users", put(ApiHandler::update_user_handler))
         // .route("/users", delete(ApiHandler::delete_user_handler))
-        .route("/users/all", get(ApiHandler::user_list_handler))
+        //.route("/users/all", get(ApiHandler::user_list_handler))
         // .route("/users/assignRole", patch(ApiHandler::assign_role_handler))
         // .route("/builds", get(ApiHandler::get_builds_handler))
         // .route("/builds", post(ApiHandler::create_build_handler))
@@ -91,7 +91,7 @@ async fn main() {
     // run the migrations on server startup
     {
         let conn = pool.get().await.unwrap();
-        conn.interact(|conn| conn.run_pending_migrations(MIGRATIONS).map(|_| ()))
+        conn.interact(|conn: &mut PgConnection| conn.run_pending_migrations(MIGRATIONS).map(|_| ()))
             .await
             .unwrap()
             .unwrap();
