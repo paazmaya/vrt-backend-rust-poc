@@ -29,12 +29,26 @@ Build and Run: Open a terminal and navigate to your project directory. Run the f
 docker-compose up
 ```
 
-Docker Compose will build the Docker image based on the Dockerfile and set up the services defined in the docker-compose.yml file. Your Rust application will be accessible at the specified port (e.g., http://localhost:8000), and the PostgreSQL database will be available at localhost:5432.
+Docker Compose will build the Docker image based on the Dockerfile and set up the services defined in the docker-compose.yml file. Your Rust application will be accessible at the specified port (http://localhost:5252), and the PostgreSQL database will be available at localhost:5431.
 
 Stopping Containers: To stop the containers, press Ctrl+C in the terminal where you ran docker-compose up. If you want to stop and remove the containers, run:
 
 ```sh
 docker-compose down
+```
+
+## Seeding the database with initial default data
+
+Initialise database with default user and project:
+
+```sh
+cargo run --bin seed
+```
+
+Run tests against just the seeding process:
+
+```sh
+cargo test --test seed
 ```
 
 ## License

@@ -44,7 +44,12 @@ tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 # https://crates.io/crates/rand
 rand = "0.8"
 
+# Easily hash and verify passwords using bcrypt
+# https://crates.io/crates/bcrypt
+bcrypt = "0.15"
+
 [dev-dependencies]
 
 # https://insta.rs/
 insta = "1.31"
+
