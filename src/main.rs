@@ -1,4 +1,7 @@
 
+mod handlers;
+mod models;
+pub mod schema;
 
 use axum::{
     routing::{get, post, put, patch, delete},
@@ -11,15 +14,12 @@ use std::env;
 use std::net::SocketAddr;
 use std::str::FromStr;
 
-use diesel::pg::PgConnection;
+use diesel::{pg::PgConnection, Connection};
 use deadpool_diesel::{Pool, Manager, Runtime};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod handlers;
-mod models;
-mod schema;
 
 use crate::handlers::ApiHandler;
 
@@ -64,6 +64,7 @@ fn routes() -> Router<Pool<Manager<PgConnection>>, Body> {
         // .route("/projects", post(ApiHandler::create_project_handler))
         // .route("/projects/{id}", delete(ApiHandler::remove_project_handler))
 }
+
 
 
 #[tokio::main]

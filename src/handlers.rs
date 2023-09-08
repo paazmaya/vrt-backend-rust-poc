@@ -4,9 +4,10 @@ use axum::{extract::State, response::Json};
 
 use rand::Rng;
 
-use diesel::PgConnection;
-use deadpool_diesel::postgres::Pool;
+use diesel::pg::PgConnection;
 use diesel::query_dsl::methods::SelectDsl;
+use diesel::{SelectableHelper, RunQueryDsl};
+use deadpool_diesel::{Pool, Manager};
 
 use serde::{Deserialize, Serialize};
 
@@ -15,6 +16,7 @@ use crate::models::*;
 
 // Table definitions
 use crate::schema::users::dsl::*;
+
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
@@ -63,7 +65,7 @@ impl ApiHandler {
      * code and an error message as an error. 
     */
     pub async fn health_check_handler(
-        State(_pool): State<Pool>,
+        State(_pool): State<Pool<Manager<PgConnection>>>,
     ) -> Result<Json<HealthResponseDto>, (StatusCode, String)> {
         // Generate a random number between 0 and 1
         let random_number: i32 = rand::thread_rng().gen_range(0..2);
@@ -77,14 +79,30 @@ impl ApiHandler {
         }
     }
 
+    pub async fn user_list_handler(
+        State(pool): State<Pool<Manager<PgConnection>>>,
+    ) -> Result<Json<Vec<UserDto>>, (StatusCode, String)> {
+
+        let conn = pool.get().await.map_err(internal_error)?;
+        
+        let res: Vec<UserDto> = conn
+            .interact(|conn: &mut PgConnection| 
+                users.select(UserDto::as_select()).load(conn))
+            .await
+            .map_err(internal_error)?
+            .map_err(internal_error)?;
+        
+        Ok(Json(res))
+    }
+
     pub async fn register_user_handler(
-        State(pool): State<Pool>,
+        State(pool): State<Pool<Manager<PgConnection>>>,
         Json(new_user): Json<CreateUserDto>,
     ) -> Result<Json<UserRegisterDto>, (StatusCode, String)> {
         
         let conn = pool.get().await.map_err(internal_error)?;
         let res: UserRegisterDto = conn
-            .interact(|conn| {
+            .interact(|conn: &mut PgConnection| {
                 diesel::insert_into(users)
                     .values(new_user)
                     .returning(UserRegisterDto::as_returning())
@@ -146,19 +164,6 @@ impl ApiHandler {
         })
     }
     */
-
-    pub async fn user_list_handler(
-        State(pool): State<Pool>,
-    ) -> Result<Json<Vec<UserDto>>, (StatusCode, String)> {
-
-        let conn = pool.get().await.map_err(internal_error)?;
-        let res: Vec<UserDto> = conn
-            .interact(|conn: &mut PgConnection| users.select(UserDto::as_select()).load(conn))
-            .await
-            .map_err(internal_error)?
-            .map_err(internal_error)?;
-        Ok(Json(res))
-    }
     /* 
     pub async fn assign_role_handler(&self) -> Result<Json<UserDto>, StatusCode> {
         // Implement assigning a role to a user logic

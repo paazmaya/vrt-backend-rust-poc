@@ -2,6 +2,9 @@ use chrono::NaiveDateTime;
 use serde::{Serialize, Deserialize};
 use diesel::{Queryable, Selectable, Insertable};
 
+use diesel::dsl::select;
+use diesel::sql_types::Jsonb;
+
 // Table definitions
 use crate::schema::users::dsl::*;
 use diesel::SelectableHelper;
@@ -198,7 +201,7 @@ pub struct UserListResponseDto {
 // User DTO
 #[derive(Debug, Serialize, Deserialize, Selectable, Queryable)]
 #[diesel(table_name = crate::schema::users)]
-pub struct UserDto {
+pub struct UserDtoOrig {
     pub id: String,
     pub email: String,
     pub first_name: Option<String>,
@@ -208,6 +211,24 @@ pub struct UserDto {
     pub role: Role,
 }
 
+#[derive(Debug, Serialize, Deserialize, Selectable, Queryable)]
+#[diesel(table_name = crate::schema::users)]
+pub struct UserDto {
+    #[diesel(column_name = "id")]
+    pub id: String,
+    #[diesel(column_name = "email")]
+    pub email: String,
+    #[diesel(column_name = "first_name")]
+    pub first_name: Option<String>,
+    #[diesel(column_name = "last_name")]
+    pub last_name: Option<String>,
+    #[diesel(column_name = "api_key")]
+    pub api_key: String,
+    #[diesel(column_name = "is_active")]
+    pub is_active: bool,
+    #[diesel(column_name = "role")]
+    pub role: Role,
+}
 
 // Build DTO
 #[derive(Debug, Serialize, Deserialize, Queryable)]
