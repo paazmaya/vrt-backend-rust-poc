@@ -69,6 +69,7 @@ impl ApiHandler {
     ) -> Result<Json<HealthResponseDto>, (StatusCode, String)> {
         // Generate a random number between 0 and 1
         let random_number: i32 = rand::thread_rng().gen_range(0..2);
+        tracing::debug!("Got random at {}", random_number);
 
         if random_number == 0 {
             // Simulate an error response
@@ -115,14 +116,76 @@ impl ApiHandler {
         Ok(Json(res))
     }
  */
-    /*
-    pub async fn login_handler() -> Json<ApiResponse<String>> {
-        Json(ApiResponse {
-            status: Status::Ok,
-            data: "Login successful".to_string(),
-        })
-    }
+
     
+
+    pub async fn login_handler(
+        Json(login_request): Json<UserLoginDto>,
+        State(pool): State<Pool<Manager<PgConnection>>>,
+    ) -> Result<Json<UserLoginDto>, (StatusCode, String)> {
+    // You can access the database pool using `pool`. Use it to perform database operations.
+
+    // Example: Check if the user exists in the database.
+    // Replace this with your actual database query.
+    let user_exists = ApiHandler::check_user_exists(&pool, &login_request.email).await;
+
+    if user_exists {
+        // User exists, perform authentication and return user information.
+        // You should implement your authentication logic here.
+
+        // Example: Authenticate the user (replace with your authentication logic).
+        let authenticated_user = ApiHandler::authenticate_user(&pool, &login_request).await;
+
+        match authenticated_user {
+            Some(user) => Ok(Json(user)), // Return the authenticated user.
+            None => Err((StatusCode::UNAUTHORIZED, "Invalid credentials".to_string())),
+        }
+    } else {
+        // User does not exist.
+        Err((StatusCode::NOT_FOUND, "User not found".to_string()))
+    }
+}
+
+// Example function to check if a user exists in the database.
+pub async fn check_user_exists(pool: &Pool<Manager<PgConnection>>, email: &str) -> bool {
+    // Implement your database query logic here.
+    // Check if a user with the provided email exists in the database.
+
+    // Example: Use Diesel to query the database (replace with actual query).
+    let conn = pool.get().await.expect("Failed to get database connection");
+    let user_exists = users::table.filter(users::email.eq(email)).count()
+        .get_result::<i64>(&conn)
+        .map(|count| count > 0)
+        .unwrap_or(false);
+
+    // Return whether the user exists.
+    // user_exists
+    // (Replace this with your actual database query)
+    false
+}
+
+// Example function to authenticate a user.
+async fn authenticate_user(pool: &Pool<Manager<PgConnection>>, login_request: &UserLoginRequestDto) -> Option<UserDto> {
+    // Implement your authentication logic here.
+    // Check if the provided credentials are valid and return the user information.
+
+    // Example: Use Diesel to query the database (replace with actual query).
+    let conn = pool.get().await.expect("Failed to get database connection");
+    let user = users::table
+        .filter(users::email.eq(&login_request.email))
+        .filter(users::password.eq(&login_request.password))
+        .first(&conn)
+        .optional()
+        .expect("Failed to fetch user");
+
+    // Return the authenticated user or None if authentication fails.
+    // user
+    // (Replace this with your actual authentication logic)
+    None
+}
+
+
+    /*
 
     pub async fn generate_new_api_key_handler(&self) -> Result<Json<String>, StatusCode> {
         // Implement generating a new API key logic
