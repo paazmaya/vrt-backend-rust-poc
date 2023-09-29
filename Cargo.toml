@@ -51,5 +51,5 @@ bcrypt = "0.15"
 [dev-dependencies]
 
 # https://insta.rs/
-insta = "1.31"
+insta = "1.32"
 
