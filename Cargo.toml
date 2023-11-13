@@ -13,7 +13,7 @@ axum = { version = "0.6", features = ["macros"] }
 tower = { version = "0.4", features = ["full"] }
 
 # https://tokio.rs/
-tokio = { version = "1.33", features = ["full"] }
+tokio = { version = "1.34", features = ["full"] }
 
 # https://diesel.rs/
 diesel = { version = "2.1", features = ["postgres", "chrono"] }
