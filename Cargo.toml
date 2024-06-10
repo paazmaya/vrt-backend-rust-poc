@@ -23,7 +23,7 @@ diesel = { version = "2.1", features = ["postgres", "chrono"] }
 diesel_migrations = "2.1"
 
 # https://github.com/bikeshedder/deadpool
-deadpool-diesel = { version = "0.5", features = ["postgres"] }
+deadpool-diesel = { version = "0.6", features = ["postgres"] }
 
 # https://serde.rs/
 serde = { version = "1.0", features = ["derive"] }
