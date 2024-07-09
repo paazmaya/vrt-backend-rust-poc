@@ -20,7 +20,7 @@ diesel = { version = "2.1", features = ["postgres", "chrono"] }
 # Also: cargo install diesel_cli --no-default-features --features postgres
 
 # https://diesel.rs/guides/getting-started/#migrations
-diesel_migrations = "2.1"
+diesel_migrations = "2.2"
 
 # https://github.com/bikeshedder/deadpool
 deadpool-diesel = { version = "0.5", features = ["postgres"] }
